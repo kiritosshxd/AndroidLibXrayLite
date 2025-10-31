@@ -43,11 +43,14 @@ type CoreController struct {
 }
 
 // CoreCallbackHandler defines interface for receiving callbacks and notifications from the core service
+// NOTE: Protect voltou pra permitir passar o fd pro VpnService
 type CoreCallbackHandler interface {
-	Startup() int
-	Shutdown() int
-	OnEmitStatus(int, string) int
+    Startup() int
+    Shutdown() int
+    OnEmitStatus(code int, msg string) int
+    Protect(fd int) bool
 }
+
 
 // consoleLogWriter implements a log writer without datetime stamps
 // as Android system already adds timestamps to each log line
@@ -99,6 +102,8 @@ func NewCoreController(s CoreCallbackHandler) *CoreController {
 	); err != nil {
 		log.Printf("Failed to register log handler: %v", err)
 	}
+
+	attachProtectedDialer(s)
 
 	return &CoreController{
 		CallbackHandler: s,
